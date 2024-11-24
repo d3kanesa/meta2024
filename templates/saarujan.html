@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Physio</title>
+    <style>
+        :root {
+            --primary: rgb(159, 200, 234);
+            --secondary: rgba(255, 255, 255, 0.75);
+            --accent: rgb(90, 180, 210);
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0; 
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #app {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            background: linear-gradient(to bottom, var(--primary) 80%, rgb(17, 10, 27) 120%);
+        }
+
+        #feedContainer {
+            position: absolute;
+            top: 5vw;
+            height: calc(85vh - 5vw);
+            width: 90vw;
+            border-radius: 0 0 42px 42px;
+            background-color: var(--primary);
+        }
+
+        #cameraFeed {
+            height: calc(85vh - 5vw);
+            width: 90vw;
+            object-fit: cover;
+            border-radius: 0 0 42px 42px;
+        }
+
+        #soundContainer {
+            position: absolute;
+            bottom: 6vh;
+            width: 60vw;
+            height: 40vw;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+        }
+
+        .soundwave {
+            width: 1.75vw;
+            height: 2.5vw;
+            border-radius: 10px;
+            background-color: var(--secondary);
+            transition: all 400ms ease-in-out;
+        }
+
+        #soundContainer:hover > .soundwave {
+            box-shadow: 0 0 12px rgb(0 0 0 / 20%);
+            background-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="feedContainer"> 
+            <img src="{% url 'video_feed' %}" id="cameraFeed">
+        </div>
+        <div id="soundContainer">
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+            <div class="soundwave"></div>
+        </div>
+    </div>
+</body>
+    <script>
+        async function animateSound() {
+            const soundwaves = document.getElementById("soundContainer").children;
+
+            for (let i = 0; i < soundwaves.length; ++i) {
+                soundwaves[i].style.height = `${Math.max(40 * Math.sin(i / 7) * Math.random(), 4)}vw`;
+            }
+        }
+        
+        document.addEventListener("DOMContentLoaded", async () => {
+            animateSound();
+            fetch('/api/hand-keypoints/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'  // Ensure CSRF token is included
+                },
+                body: JSON.stringify({
+                    action: 'start_recording'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

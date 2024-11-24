@@ -1,61 +1,67 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pose Detection</title>
+    <title>Physio</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gradient-to-r from-blue-500 to-purple-600 min-h-screen flex flex-col items-center justify-center">
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
-        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
+        <h1 class="text-4xl font-bold text-center mb-8 text-white">
             Pose Detection Stream
         </h1>
 
         <!-- Main Content -->
-        <div class="flex gap-8">
+        <div class="flex flex-col items-center">
             <!-- Video Feed Container -->
-            <div class="flex-1">
-                <div class="bg-white rounded-lg shadow-lg p-4">
-                    <img 
-                        src="{% url 'video_feed' %}" 
-                        class="w-full rounded-lg"
-                        style="height: 75vh; object-fit: cover;"
-                    >
-                </div>
+            <div class="bg-white rounded-lg shadow-lg p-4 mb-8">
+                <img 
+                    src="{% url 'video_feed' %}" 
+                    class="w-full rounded-lg"
+                    style="height: 50vh; object-fit: cover;"
+                >
             </div>
 
-            <!-- Chat Section -->
-            <div class="w-96">
-                <div class="bg-white rounded-lg shadow-lg h-full flex flex-col">
-                    <!-- Chat Header -->
-                    <div class="p-4 border-b">
-                        <h2 class="font-semibold text-gray-800">Chat</h2>
-                    </div>
-
-                    <!-- Messages Container -->
-                    <div class="flex-1 p-4 space-y-4 overflow-y-auto" style="height: 60vh;">
-                        <!-- Sample Messages -->
-                        <div class="bg-gray-100 rounded-lg p-3">
-                            <p class="text-sm text-gray-800">Pose detection initialized</p>
-                        </div>
-                    </div>
-
-                    <!-- Input Area -->
-                    <div class="p-4 border-t">
-                        <div class="flex gap-2">
-                            <input 
-                                type="text" 
-                                class="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:border-blue-500"
-                                placeholder="Type a message..."
-                            >
-                            <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                                Send
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <!-- Record Icon -->
+            <div class="flex justify-center">
+                <button id="recordButton" class="bg-red-500 text-white p-4 rounded-full hover:bg-red-600 transition">
+                    <i class="fas fa-circle"></i>
+                </button>
             </div>
         </div>
     </div>
+
+    <script>
+        let x = 0;
+        document.getElementById('recordButton').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            x+=1;
+            console.log(x);
+            let act='start_recording';
+            if (x%2==0){
+                act='stop_recording';
+            }
+            fetch('/api/hand-keypoints/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'  // Ensure CSRF token is included
+                },
+                body: JSON.stringify({
+                    action: act
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
 </body>
 </html>

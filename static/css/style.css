@@ -1,0 +1,31 @@
+:root {
+    --primary: rgb(205, 205, 205);
+    --secondary: rgba(255, 255, 255, 0.75);
+    --accent: rgb(60, 180, 210);
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0; 
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    background-color: linear-gradient(to bottom right, black, var(--accent), primary);
+}
+
+#cameraFeed {
+    height: calc(65vh - 5vw);
+    width: 90vw;
+    padding-top: 5vw;
+    border-radius: 60px;
+    object-fit: cover;
+}
+
+.soundwave {
+    width: 2.5vw;
+    height: 2.5vw;
+    border-radius: 10px;
+    background-color: var(--secondary);
+}
