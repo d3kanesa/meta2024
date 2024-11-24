@@ -19,6 +19,8 @@ from mutagen.mp3 import MP3
 from .ml import main as MLMAIN  # Import the analyze_form function from ml.py
 import asyncio
 from collections import defaultdict
+import os
+import statistics
 
 CHUNK_SIZE = 1024
 url = "https://api.elevenlabs.io/v1/text-to-speech/SAz9YHcvj6GT2YYXdXww"
@@ -104,9 +106,9 @@ def process_frame(frame):
 async def genContent(exercise):
     print("Generating content")
     for i,j in d.items():
-        d[i]["x"] = [sum(j["x"])/len(j["x"])]
-        d[i]["y"] = [sum(j["y"])/len(j["y"])]
-        d[i]["z"] = [sum(j["z"])/len(j["z"])]
+        d[i]["x"] = [statistics.mean(j["x"])]
+        d[i]["y"] = [statistics.mean(j["y"])]
+        d[i]["z"] = [statistics.mean(j["z"])]
     await MLMAIN(exercise,d)
 
 async def handle_recording(request):
@@ -154,32 +156,3 @@ def hand_keypoints_view(request):
 def home_view(request):
     return render(request, 'home.html')
 
-def provideFeedback(feedback):
-    CHUNK_SIZE = 1024
-    url = "https://api.elevenlabs.io/v1/text-to-speech/SAz9YHcvj6GT2YYXdXww"
-
-    headers = {
-    "Accept": "audio/wav",
-    "Content-Type": "application/json",
-    "xi-api-key": "sk_85e693c5e23fe7cfcf28738eb391022472d568e534e7f735"
-    }
-    
-    data = {
-        "text": feedback,
-        "model_id": "eleven_monolingual_v1",
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.5
-        }
-    }
-
-    response = request.post(url, json=data, headers=headers)
-    with open('output.mp3', 'wb') as f:
-        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-            if chunk:
-                f.write(chunk)
-
-    mixer.init()
-    mixer.music.load("C:\\Users\\saaru\\Documents\\LLama Hackathon\\output.mp3")
-    mixer.music.play()
-    time.sleep(MP3("output.mp3").info.length)

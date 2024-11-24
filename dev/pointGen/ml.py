@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 from groq import AsyncGroq
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -9,6 +10,12 @@ from dotenv import load_dotenv
 import ast
 import re
 load_dotenv()
+import requests
+import time
+from pygame import mixer
+from mutagen.mp3 import MP3
+import pyttsx3
+
 # Calls the PersistentClient Vector Store
 async def hyde(client, model, user_pose, exercise):
     """
@@ -110,7 +117,7 @@ async def main(exercise,d):
     Analyze the relative relationship between these coordinates to give the user tips on how to fix their form. 
     Do not use specific mathematics in your answer, but use them to inform your answer. 
     Fitness coach allows user some level of uncertainty due to camera warps and measuring uncertainty 
-
+    
     Your answer should be depicted in the format shown only between the angled brackets:
     <
     explain problem with form here in 1 line
@@ -120,14 +127,27 @@ async def main(exercise,d):
     '''
     if exercise == "lunge":
         assistance = '''
-        A lunge is a lower body exercise that involves stepping forward with one leg, bending both knees, and keeping an upright back position. If any of these criteria are not met, it is NOT a lunge.
-        Each of the following metrics have a given priority. Consider those with higher priority much more than any lower priority items.
-                
-        1. Most importantly, ensure the user's back knee is at a low depth, in line with the depth of the heel of the foot. Ensure that the front thigh is parallel to the ground and the back shin is barely hovering over the ground. IT SHOULD NOT TOUCH THE GROUND.
-        2. Feet Alignment: Your feet should be shoulder-width apart to maintain stability.
-        3. Keep your front knee in line with your toes, avoiding any inward or outward movement.
-        4. Ensure the knee doesn't extend beyond the toes. This helps prevent knee strain.
-        5. Keep your torso upright and your core engaged throughout the movement. Avoid leaning forward, sideways or backwards. Your back must be straight vertical.        '''
+        Here are various definitions of "good form":
+        Depth: Most importantly, ensure the user's back knee is at a low depth, in line with the depth of the heel of the foot. Ensure that the front thigh is parallel to the ground and the back shin is barely hovering over the ground. IT SHOULD NOT TOUCH THE GROUND.
+        Feet Alignment: Your feet should be shoulder-width apart to maintain stability.
+        Step Forward with Control: When lunging, step forward with one leg, ensuring the knee doesn't extend beyond the toes. This helps prevent knee strain.
+        Knee Alignment: Keep your front knee in line with your toes, avoiding any inward or outward movement.
+        Lower Body: Drop your back knee low towards the ground, keeping it hovering above the floor (about an inch off the ground). Ensure your front thigh is parallel to the ground at a 90-degree angle.
+        Upper Body: Keep your torso upright and your core engaged throughout the movement. Avoid leaning forward, sideways or backwards. Your back must be straight vertical.
+        
+
+        Stand in a split stance with the right foot roughly 2 to 3 feet in front of the left foot. Your torso is straight vertical, the shoulders are back and down, your core is engaged, and your hands are resting on your hips.
+        Bend the knees and lower your body until the back knee is a few inches from the floor. At the bottom of the movement, the front thigh is parallel to the ground, the back knee points toward the floor, and your weight is evenly distributed between both legs.
+        Push back up to the starting position, keeping your weight on the heel of the front foot.
+
+        Your lead knee should not go past your toes as you lower toward the ground, yet it should be far out in front of your body.
+        Your rear knee should not touch the ground.
+        Aim to keep your hips symmetrical (at the same height, without dropping the hip of your back leg or hiking the hip of your front leg).
+        Contract your abdominals during the movement to help keep your trunk upright.
+        Your feet should stay hip-width apart during the landing and return.
+
+        Step forward and slowly lower your body until your front thigh is parallel with the ground and your lower leg is leaning slightly forward. Hips should be moving primarily downward. Avoid wobbling and driving hips forward. Keep slight forward bend at hips and maintain straight back. To return to standing, push off by activating your “thigh and butt muscles” to return to an upright standing position.
+     '''
     elif exercise == "squat":
         assistance = '''
         It is very import to ensure that User places their feet at LEAST shoulder-width apart or slightly wider, with toes pointed slightly outward (15-30 degrees).
@@ -169,24 +189,23 @@ async def main(exercise,d):
         {"role": "assistant", "content": assistance}
         ]
     coor = str(d)
-    score = await rep_rater(groq_client, model, conversation_history, coor, "100", exercise)
+    print(coor,"hi!")
+    await rep_rater(groq_client, model, conversation_history, coor, exercise)
 
-async def rep_rater(client, model, conversation_history, coor, last, exercise):
+async def rep_rater(client, model, conversation_history, coor, exercise):
         # Get the user's question
-        res = 1
         user_question = coor
         user_context = await hyde(client, model, user_question, exercise)
-        score = await confidence_s(client, model, conversation_history, user_context)
-        score = re.findall(r'\d+', score)
-        print(score)
-        score = score[0]
-        print(score)
+        # score = await confidence_s(client, model, conversation_history, use)
+        # score = re.findall(r'\d+', score)
+        # print(score)
+        # score = score[0]
+        # print(score)
         conversation_history.append({"role": "user", "content": user_context})
-        if int(last) + 10 < int(score):
-            res = 2
-        elif int(score) > 79: 
-            res = 2
-        conversation_history.append({"role": "assistant", "content": score})
+        # if int(last) + 10 < int(score):
+        #     res = 2
+        # elif int(score) > 79: 
+        #     res = 2r
 
         if user_question:
             # Generate a response using the pre-trained model
@@ -195,12 +214,29 @@ async def rep_rater(client, model, conversation_history, coor, last, exercise):
             resp = response.split("\n")[1:4]
             print("\n\n")
             print(resp)
-            print("\n")
-            print(resp[-1])
+            provideFeedback(resp[1])
             # add chatbot answer to context
             conversation_history.append({"role": "assistant", "content": response})
-        return score
 
+
+def provideFeedback(feedback):
+    print("GIVEN FEEDBACK")
+    print(feedback)
+
+    # Initialize the TTS engine
+    engine = pyttsx3.init()
+    voices = engine.getProperty('voices')
+    for voice in voices:
+        if "Zira" in voice.name:
+            engine.setProperty('voice', voice.id)
+            break
+    # Set properties (optional)
+    engine.setProperty('rate', 150)  # Speed percent (can go over 100)
+    engine.setProperty('volume', 0.9)  # Volume 0-1
+
+    # Perform the text-to-speech
+    engine.say(feedback)
+    engine.runAndWait()
 
 if __name__ == "__main__":
     asyncio.run(main("lunge"))

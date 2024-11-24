@@ -182,15 +182,14 @@
             }
         </style>
         <script>
-            let currExercise = "";
-
+                let currExercise = "", isProcessing = false;
             async function performExercise(exerciseName) {
                 currExercise = exerciseName;
                 const page = document.getElementById("cameraPage");
                 page.style.zIndex = 100;
                 page.style.opacity = 1;
                 
-                let isProcessing = false;
+                isProcessing = false;
                 document.getElementById("startProcessing").addEventListener("click", async () => {
                     if (!isProcessing) {
                         const res = await fetch('/api/hand-keypoints/', {
@@ -237,6 +236,8 @@
             async function showMenu() {
                 const page = document.getElementById("cameraPage");
                 page.style = "";
+                if (!isProcessing) return;
+
                 const res = await fetch('/api/hand-keypoints/', {
                     method: 'POST',
                     headers: {
@@ -251,6 +252,7 @@
 
                 res.json().then(data => {
                     console.log("Success", data);
+                    isProcessing = false;
                 }).catch(error => {
                     console.log("Error", error);
                 });
