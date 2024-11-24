@@ -101,28 +101,30 @@ def process_frame(frame):
         )
     return frame
 
-async def genContent():
+async def genContent(exercise):
     print("Generating content")
     for i,j in d.items():
         d[i]["x"] = [sum(j["x"])/len(j["x"])]
         d[i]["y"] = [sum(j["y"])/len(j["y"])]
         d[i]["z"] = [sum(j["z"])/len(j["z"])]
-        print(d[i],"\n\n\n\n")
-    await MLMAIN(str(d))
+    await MLMAIN(exercise,d)
 
 async def handle_recording(request):
     global is_processing
     global d
     if request.method == 'POST':
         data = json.loads(request.body)
+        print(data)
+        exercise = str(data.get('exercise'))
         action = data.get('action')
+        print(exercise)
         if action == 'start_recording':
             is_processing = True
             clearD()
             return JsonResponse({'status': 'success', 'message': 'Recording started'})
         elif action == 'stop_recording':
             is_processing = False
-            await genContent()
+            await genContent(exercise)
             return JsonResponse({'status': 'success', 'message': 'Recording stopped'})
         else:
             return JsonResponse({'status': 'error', 'message': 'Invalid action'}, status=400)
